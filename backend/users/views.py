@@ -137,6 +137,39 @@ class UserViewSet(viewsets.ModelViewSet):
             'message': 'Biometric authentication disabled'
         }, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=['post', 'patch'])
+    def update_language(self, request):
+        """Update user's preferred language."""
+        language = request.data.get('language')
+
+        if not language:
+            return Response({
+                'error': 'language is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate language is supported
+        supported_languages = ['en', 'ar']
+        if language not in supported_languages:
+            return Response({
+                'error': f'Language must be one of: {", ".join(supported_languages)}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Update user's preferred language
+        request.user.preferred_language = language
+        request.user.save()
+
+        return Response({
+            'message': 'Language updated successfully',
+            'language': language
+        }, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'])
+    def get_language(self, request):
+        """Get user's preferred language."""
+        return Response({
+            'language': request.user.preferred_language
+        }, status=status.HTTP_200_OK)
+
 
 class StudentProfileViewSet(viewsets.ModelViewSet):
     """Student Profile ViewSet."""

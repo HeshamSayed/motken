@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../generated/l10n.dart';
 import '../bloc/auth_bloc.dart';
 
 class LoginPage extends StatefulWidget {
@@ -36,6 +37,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Scaffold(
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
@@ -69,7 +71,7 @@ class _LoginPageState extends State<LoginPage> {
 
                   // Title
                   Text(
-                    'Motken',
+                    s.appName,
                     style: Theme.of(context).textTheme.displaySmall?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -77,7 +79,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Learn Quran Online',
+                    s.appTagline,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: Colors.grey,
                         ),
@@ -89,16 +91,16 @@ class _LoginPageState extends State<LoginPage> {
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: Icon(Icons.email),
+                    decoration: InputDecoration(
+                      labelText: s.email,
+                      prefixIcon: const Icon(Icons.email),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
+                        return s.pleaseEnterEmail;
                       }
                       if (!value.contains('@')) {
-                        return 'Please enter a valid email';
+                        return s.pleaseEnterValidEmail;
                       }
                       return null;
                     },
@@ -110,7 +112,7 @@ class _LoginPageState extends State<LoginPage> {
                     controller: _passwordController,
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
-                      labelText: 'Password',
+                      labelText: s.password,
                       prefixIcon: const Icon(Icons.lock),
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -125,10 +127,10 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
+                        return s.pleaseEnterPassword;
                       }
                       if (value.length < 6) {
-                        return 'Password must be at least 6 characters';
+                        return s.passwordTooShort;
                       }
                       return null;
                     },
@@ -142,7 +144,7 @@ class _LoginPageState extends State<LoginPage> {
                       onPressed: () {
                         // TODO: Navigate to forgot password
                       },
-                      child: const Text('Forgot Password?'),
+                      child: Text(s.forgotPassword),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -156,7 +158,7 @@ class _LoginPageState extends State<LoginPage> {
                             width: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Login'),
+                        : Text(s.login),
                   ),
                   const SizedBox(height: 16),
 
@@ -164,12 +166,12 @@ class _LoginPageState extends State<LoginPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text("Don't have an account? "),
+                      Text(s.dontHaveAccount + ' '),
                       TextButton(
                         onPressed: () {
                           Navigator.pushNamed(context, '/register');
                         },
-                        child: const Text('Register'),
+                        child: Text(s.register),
                       ),
                     ],
                   ),

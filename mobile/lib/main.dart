@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/config/app_config.dart';
 import 'core/theme/app_theme.dart';
+import 'generated/l10n.dart';
 
 // Data sources
 import 'features/auth/data/datasources/auth_remote_data_source.dart';
@@ -18,6 +20,9 @@ import 'features/teachers/presentation/bloc/teacher_bloc.dart';
 import 'features/sessions/presentation/bloc/session_bloc.dart';
 import 'features/payments/presentation/bloc/payment_bloc.dart';
 import 'features/profile/presentation/bloc/profile_bloc.dart';
+import 'core/language/bloc/language_bloc.dart';
+import 'core/language/bloc/language_event.dart';
+import 'core/language/bloc/language_state.dart';
 
 // Pages
 import 'features/auth/presentation/pages/login_page.dart';
@@ -38,17 +43,23 @@ import 'features/settings/presentation/pages/settings_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MotkenApp());
+
+  // Initialize SharedPreferences
+  final sharedPreferences = await SharedPreferences.getInstance();
+
+  runApp(MotkenApp(sharedPreferences: sharedPreferences));
 }
 
 class MotkenApp extends StatelessWidget {
-  const MotkenApp({super.key});
+  final SharedPreferences sharedPreferences;
+
+  const MotkenApp({super.key, required this.sharedPreferences});
 
   @override
   Widget build(BuildContext context) {
     // Setup Dio
     final dio = Dio(BaseOptions(
-      baseURL: AppConfig.apiBaseUrl,
+      baseUrl: AppConfig.apiBaseUrl,
       connectTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 30),
       headers: {
@@ -65,25 +76,42 @@ class MotkenApp extends StatelessWidget {
 
     return MultiBlocProvider(
       providers: [
+        BlocProvider(
+          create: (_) => LanguageBloc(sharedPreferences: sharedPreferences)
+            ..add(const LoadLanguageEvent()),
+        ),
         BlocProvider(create: (_) => AuthBloc(remoteDataSource: authDataSource)),
         BlocProvider(create: (_) => TeacherBloc(remoteDataSource: teacherDataSource)),
         BlocProvider(create: (_) => SessionBloc(remoteDataSource: sessionDataSource)),
         BlocProvider(create: (_) => PaymentBloc(remoteDataSource: paymentDataSource)),
         BlocProvider(create: (_) => ProfileBloc(remoteDataSource: authDataSource)),
       ],
-      child: MaterialApp(
-        title: 'Motken',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.light,
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const [Locale('en'), Locale('ar')],
-        initialRoute: '/login',
+      child: BlocBuilder<LanguageBloc, LanguageState>(
+        builder: (context, languageState) {
+          return MaterialApp(
+            title: 'Motken',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: ThemeMode.light,
+            locale: languageState.locale,
+            localizationsDelegates: const [
+              S.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: S.delegate.supportedLocales,
+            localeResolutionCallback: (locale, supportedLocales) {
+              if (locale == null) return supportedLocales.first;
+              for (var supportedLocale in supportedLocales) {
+                if (supportedLocale.languageCode == locale.languageCode) {
+                  return supportedLocale;
+                }
+              }
+              return supportedLocales.first;
+            },
+            initialRoute: '/login',
         routes: {
           '/login': (_) => const LoginPage(),
           '/register': (_) => const RegisterPage(),
@@ -126,6 +154,8 @@ class MotkenApp extends StatelessWidget {
           }
           return null;
         },
+          );
+        },
       ),
     );
   }
@@ -155,11 +185,11 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (i) => setState(() => _selectedIndex = i),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.school), label: 'Teachers'),
-          NavigationDestination(icon: Icon(Icons.event), label: 'Sessions'),
-          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
+        destinations: [
+          NavigationDestination(icon: const Icon(Icons.home), label: S.of(context).home),
+          NavigationDestination(icon: const Icon(Icons.school), label: S.of(context).teachers),
+          NavigationDestination(icon: const Icon(Icons.event), label: S.of(context).sessions),
+          NavigationDestination(icon: const Icon(Icons.person), label: S.of(context).profile),
         ],
       ),
     );
@@ -171,8 +201,9 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Motken')),
+      appBar: AppBar(title: Text(s.appName)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -184,20 +215,20 @@ class HomePage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Welcome to Motken', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                    Text(s.welcomeTitle, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
-                    const Text('Start your Quran learning journey today'),
+                    Text(s.welcomeSubtitle),
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () => Navigator.pushNamed(context, '/teachers'),
-                      child: const Text('Find a Teacher'),
+                      child: Text(s.findATeacher),
                     ),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 24),
-            const Text('Quick Actions', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(s.quickActions, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             GridView.count(
               crossAxisCount: 2,
@@ -206,10 +237,10 @@ class HomePage extends StatelessWidget {
               mainAxisSpacing: 16,
               crossAxisSpacing: 16,
               children: [
-                _QuickActionCard(icon: Icons.school, title: 'Find Teachers', onTap: () => Navigator.pushNamed(context, '/teachers')),
-                _QuickActionCard(icon: Icons.event, title: 'My Sessions', onTap: () => Navigator.pushNamed(context, '/my-sessions')),
-                _QuickActionCard(icon: Icons.card_membership, title: 'Packages', onTap: () => Navigator.pushNamed(context, '/packages')),
-                _QuickActionCard(icon: Icons.receipt_long, title: 'Subscription', onTap: () => Navigator.pushNamed(context, '/subscription')),
+                _QuickActionCard(icon: Icons.school, title: s.findTeachers, onTap: () => Navigator.pushNamed(context, '/teachers')),
+                _QuickActionCard(icon: Icons.event, title: s.mySessions, onTap: () => Navigator.pushNamed(context, '/my-sessions')),
+                _QuickActionCard(icon: Icons.card_membership, title: s.packages, onTap: () => Navigator.pushNamed(context, '/packages')),
+                _QuickActionCard(icon: Icons.receipt_long, title: s.subscription, onTap: () => Navigator.pushNamed(context, '/subscription')),
               ],
             ),
           ],
