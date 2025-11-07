@@ -5,6 +5,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'intl/messages_all.dart' as messages_all;
 
 class S {
   S();
@@ -24,7 +25,7 @@ class S {
         ? locale.languageCode
         : locale.toString();
     final localeName = Intl.canonicalizedLocale(name);
-    return initializeMessages(localeName).then((_) {
+    return messages_all.initializeMessages(localeName).then((_) {
       Intl.defaultLocale = localeName;
       final instance = S();
       S._current = instance;
@@ -370,9 +371,4 @@ class AppLocalizationDelegate extends LocalizationsDelegate<S> {
     }
     return false;
   }
-}
-
-Future<dynamic> initializeMessages(String localeName) async {
-  // Messages are embedded in the code
-  return Future.value(true);
 }

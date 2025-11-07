@@ -112,48 +112,48 @@ class MotkenApp extends StatelessWidget {
               return supportedLocales.first;
             },
             initialRoute: '/login',
-        routes: {
-          '/login': (_) => const LoginPage(),
-          '/register': (_) => const RegisterPage(),
-          '/home': (_) => const MainNavigationPage(),
-          '/teachers': (_) => const TeachersListPage(),
-          '/my-sessions': (_) => const MySessionsPage(),
-          '/packages': (_) => const PackagesPage(),
-          '/subscription': (_) => const SubscriptionPage(),
-          '/transactions': (_) => const TransactionsPage(),
-          '/profile': (_) => const ProfilePage(),
-          '/edit-profile': (_) => const EditProfilePage(),
-          '/change-password': (_) => const ChangePasswordPage(),
-          '/settings': (_) => const SettingsPage(),
-        },
-        onGenerateRoute: (settings) {
-          // Handle routes with arguments
-          if (settings.name == '/book-session') {
-            final teacherId = settings.arguments as String;
-            return MaterialPageRoute(
-              builder: (_) => BookSessionPage(teacherId: teacherId),
-            );
-          }
-          if (settings.name == '/teacher-details') {
-            final teacherId = settings.arguments as String;
-            return MaterialPageRoute(
-              builder: (_) => TeacherDetailsPage(teacherId: teacherId),
-            );
-          }
-          if (settings.name == '/session-details') {
-            final sessionId = settings.arguments as String;
-            return MaterialPageRoute(
-              builder: (_) => SessionDetailsPage(sessionId: sessionId),
-            );
-          }
-          if (settings.name == '/package-details') {
-            final packageId = settings.arguments as String;
-            return MaterialPageRoute(
-              builder: (_) => PackageDetailsPage(packageId: packageId),
-            );
-          }
-          return null;
-        },
+            routes: {
+              '/login': (_) => const LoginPage(),
+              '/register': (_) => const RegisterPage(),
+              '/home': (_) => const MainNavigationPage(),
+              '/teachers': (_) => const TeachersListPage(),
+              '/my-sessions': (_) => const MySessionsPage(),
+              '/packages': (_) => const PackagesPage(),
+              '/subscription': (_) => const SubscriptionPage(),
+              '/transactions': (_) => const TransactionsPage(),
+              '/profile': (_) => const ProfilePage(),
+              '/edit-profile': (_) => const EditProfilePage(),
+              '/change-password': (_) => const ChangePasswordPage(),
+              '/settings': (_) => const SettingsPage(),
+            },
+            onGenerateRoute: (settings) {
+              // Handle routes with arguments
+              if (settings.name == '/book-session') {
+                final teacherId = settings.arguments as String;
+                return MaterialPageRoute(
+                  builder: (_) => BookSessionPage(teacherId: teacherId),
+                );
+              }
+              if (settings.name == '/teacher-details') {
+                final teacherId = settings.arguments as String;
+                return MaterialPageRoute(
+                  builder: (_) => TeacherDetailsPage(teacherId: teacherId),
+                );
+              }
+              if (settings.name == '/session-details') {
+                final sessionId = settings.arguments as String;
+                return MaterialPageRoute(
+                  builder: (_) => SessionDetailsPage(sessionId: sessionId),
+                );
+              }
+              if (settings.name == '/package-details') {
+                final packageId = settings.arguments as String;
+                return MaterialPageRoute(
+                  builder: (_) => PackageDetailsPage(packageId: packageId),
+                );
+              }
+              return null;
+            },
           );
         },
       ),
