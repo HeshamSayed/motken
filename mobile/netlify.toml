@@ -1,7 +1,11 @@
 [build]
   base = "mobile/"
   publish = "build/web"
-  command = "flutter config --enable-web && flutter pub get && flutter build web --release"
+  command = """
+    flutter config --enable-web && \
+    flutter pub get && \
+    flutter build web --release --dart-define=API_BASE_URL=${API_BASE_URL:-http://localhost:8000/api/v1/}
+  """
 
 [[redirects]]
   from = "/*"
