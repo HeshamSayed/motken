@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/teacher_bloc.dart';
+import '../bloc/teacher_event.dart';
+import '../bloc/teacher_state.dart';
+import '../../data/models/teacher_model.dart';
 
 class TeachersListPage extends StatefulWidget {
   const TeachersListPage({super.key});
@@ -8,9 +13,16 @@ class TeachersListPage extends StatefulWidget {
 }
 
 class _TeachersListPageState extends State<TeachersListPage> {
-  String _selectedSpecialization = 'all';
+  String? _selectedSpecialization;
   double _maxPrice = 100;
   double _minRating = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Load teachers on init
+    context.read<TeacherBloc>().add(LoadTeachersEvent());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,12 +57,22 @@ class _TeachersListPageState extends State<TeachersListPage> {
       child: Row(
         children: [
           FilterChip(
+            label: const Text('All'),
+            selected: _selectedSpecialization == null,
+            onSelected: (selected) {
+              setState(() => _selectedSpecialization = null);
+              context.read<TeacherBloc>().add(LoadTeachersEvent());
+            },
+          ),
+          const SizedBox(width: 8),
+          FilterChip(
             label: const Text('Tajweed'),
             selected: _selectedSpecialization == 'tajweed',
             onSelected: (selected) {
-              setState(() {
-                _selectedSpecialization = selected ? 'tajweed' : 'all';
-              });
+              setState(() => _selectedSpecialization = selected ? 'tajweed' : null);
+              context.read<TeacherBloc>().add(LoadTeachersEvent(
+                specialization: _selectedSpecialization,
+              ));
             },
           ),
           const SizedBox(width: 8),
@@ -58,9 +80,10 @@ class _TeachersListPageState extends State<TeachersListPage> {
             label: const Text('Memorization'),
             selected: _selectedSpecialization == 'memorization',
             onSelected: (selected) {
-              setState(() {
-                _selectedSpecialization = selected ? 'memorization' : 'all';
-              });
+              setState(() => _selectedSpecialization = selected ? 'memorization' : null);
+              context.read<TeacherBloc>().add(LoadTeachersEvent(
+                specialization: _selectedSpecialization,
+              ));
             },
           ),
           const SizedBox(width: 8),
@@ -68,9 +91,10 @@ class _TeachersListPageState extends State<TeachersListPage> {
             label: const Text('Reading'),
             selected: _selectedSpecialization == 'reading',
             onSelected: (selected) {
-              setState(() {
-                _selectedSpecialization = selected ? 'reading' : 'all';
-              });
+              setState(() => _selectedSpecialization = selected ? 'reading' : null);
+              context.read<TeacherBloc>().add(LoadTeachersEvent(
+                specialization: _selectedSpecialization,
+              ));
             },
           ),
         ],
@@ -79,24 +103,83 @@ class _TeachersListPageState extends State<TeachersListPage> {
   }
 
   Widget _buildTeachersList() {
-    // TODO: Implement actual teacher list with BLoC
-    // For now, showing placeholder
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: 10,
-      itemBuilder: (context, index) {
-        return _buildTeacherCard(index);
+    return BlocBuilder<TeacherBloc, TeacherState>(
+      builder: (context, state) {
+        if (state is TeacherLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (state is TeacherError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(state.message),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    context.read<TeacherBloc>().add(LoadTeachersEvent());
+                  },
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        if (state is TeachersLoaded) {
+          if (state.teachers.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.school_outlined, size: 64, color: Colors.grey.shade400),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No teachers found',
+                    style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
+                  ),
+                  if (state.appliedFilter != null) ...[
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () {
+                        setState(() => _selectedSpecialization = null);
+                        context.read<TeacherBloc>().add(LoadTeachersEvent());
+                      },
+                      child: const Text('Clear filters'),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: state.teachers.length,
+            itemBuilder: (context, index) {
+              return _buildTeacherCard(state.teachers[index]);
+            },
+          );
+        }
+
+        return const SizedBox.shrink();
       },
     );
   }
 
-  Widget _buildTeacherCard(int index) {
+  Widget _buildTeacherCard(TeacherModel teacher) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       child: InkWell(
         onTap: () {
-          // TODO: Navigate to teacher detail
-          // context.go('/teacher/123');
+          Navigator.pushNamed(
+            context,
+            '/book-session',
+            arguments: teacher.id,
+          );
         },
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -107,7 +190,7 @@ class _TeachersListPageState extends State<TeachersListPage> {
                 radius: 40,
                 backgroundColor: Colors.blue.shade100,
                 child: Text(
-                  'T${index + 1}',
+                  teacher.firstName.isNotEmpty ? teacher.firstName[0].toUpperCase() : 'T',
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -122,7 +205,7 @@ class _TeachersListPageState extends State<TeachersListPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Teacher ${index + 1}',
+                      teacher.fullName,
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 4),
@@ -130,27 +213,28 @@ class _TeachersListPageState extends State<TeachersListPage> {
                       children: [
                         const Icon(Icons.star, size: 16, color: Colors.amber),
                         const SizedBox(width: 4),
-                        Text('4.${8 - (index % 3)}'),
+                        Text(teacher.averageRating.toStringAsFixed(1)),
                         const SizedBox(width: 8),
-                        Text('(${50 + index * 5} reviews)'),
+                        Text('(${teacher.totalRatings} reviews)'),
                       ],
                     ),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
                       children: [
-                        Chip(
-                          label: const Text('Tajweed'),
+                        ...teacher.specializations.take(2).map((spec) => Chip(
+                          label: Text(spec),
                           labelStyle: const TextStyle(fontSize: 12),
                           padding: EdgeInsets.zero,
                           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        Chip(
-                          label: const Text('10+ years'),
-                          labelStyle: const TextStyle(fontSize: 12),
-                          padding: EdgeInsets.zero,
-                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
+                        )),
+                        if (teacher.yearsOfExperience > 0)
+                          Chip(
+                            label: Text('${teacher.yearsOfExperience}+ years'),
+                            labelStyle: const TextStyle(fontSize: 12),
+                            padding: EdgeInsets.zero,
+                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
                       ],
                     ),
                   ],
@@ -162,7 +246,7 @@ class _TeachersListPageState extends State<TeachersListPage> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '\$${15 + index * 2}',
+                    '\$${teacher.session30minRate.toStringAsFixed(0)}',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           color: Theme.of(context).colorScheme.primary,
                           fontWeight: FontWeight.bold,
@@ -220,7 +304,10 @@ class _TeachersListPageState extends State<TeachersListPage> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              // TODO: Apply filters
+              context.read<TeacherBloc>().add(LoadTeachersEvent(
+                specialization: _selectedSpecialization,
+                minRating: _minRating > 0 ? _minRating : null,
+              ));
             },
             child: const Text('Apply'),
           ),

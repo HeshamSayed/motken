@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/session_bloc.dart';
+import '../bloc/session_event.dart';
+import '../bloc/session_state.dart';
 
 class BookSessionPage extends StatefulWidget {
   final String teacherId;
@@ -25,11 +29,25 @@ class _BookSessionPageState extends State<BookSessionPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Book Session'),
-      ),
-      body: SingleChildScrollView(
+    return BlocListener<SessionBloc, SessionState>(
+      listener: (context, state) {
+        if (state is SessionBooked) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Session booked successfully!')),
+          );
+          Navigator.pop(context);
+        }
+        if (state is SessionError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: ${state.message}')),
+          );
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Book Session'),
+        ),
+        body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -174,6 +192,7 @@ class _BookSessionPageState extends State<BookSessionPage> {
           ],
         ),
       ),
+      ),
     );
   }
 
@@ -215,7 +234,13 @@ class _BookSessionPageState extends State<BookSessionPage> {
   }
 
   Future<void> _bookSession() async {
-    // TODO: Implement actual booking with BLoC
+    if (_curriculumController.text.isEmpty || _topicController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in curriculum and topic')),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -233,13 +258,23 @@ class _BookSessionPageState extends State<BookSessionPage> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              // TODO: Submit booking
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Session booked successfully!'),
-                ),
-              );
-              Navigator.pop(context);
+
+              // Format date and time for API
+              final scheduledDate = '${_selectedDate.year}-'
+                  '${_selectedDate.month.toString().padLeft(2, '0')}-'
+                  '${_selectedDate.day.toString().padLeft(2, '0')}';
+              final scheduledTime = '${_selectedTime.hour.toString().padLeft(2, '0')}:'
+                  '${_selectedTime.minute.toString().padLeft(2, '0')}:00';
+
+              // Submit booking via BLoC
+              context.read<SessionBloc>().add(BookSessionEvent(
+                teacherId: widget.teacherId,
+                scheduledDate: scheduledDate,
+                scheduledTime: scheduledTime,
+                duration: _selectedDuration,
+                curriculum: _curriculumController.text,
+                lessonTopic: _topicController.text,
+              ));
             },
             child: const Text('Confirm'),
           ),

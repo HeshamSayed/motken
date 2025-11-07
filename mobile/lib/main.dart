@@ -14,6 +14,7 @@ import 'features/payments/data/datasources/payment_remote_data_source.dart';
 
 // BLoCs
 import 'features/auth/presentation/bloc/auth_bloc.dart';
+import 'features/teachers/presentation/bloc/teacher_bloc.dart';
 import 'features/sessions/presentation/bloc/session_bloc.dart';
 import 'features/payments/presentation/bloc/payment_bloc.dart';
 import 'features/profile/presentation/bloc/profile_bloc.dart';
@@ -59,6 +60,7 @@ class MotkenApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => AuthBloc(remoteDataSource: authDataSource)),
+        BlocProvider(create: (_) => TeacherBloc(remoteDataSource: teacherDataSource)),
         BlocProvider(create: (_) => SessionBloc(remoteDataSource: sessionDataSource)),
         BlocProvider(create: (_) => PaymentBloc(remoteDataSource: paymentDataSource)),
         BlocProvider(create: (_) => ProfileBloc(remoteDataSource: authDataSource)),
