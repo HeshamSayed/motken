@@ -1,0 +1,103 @@
+services:
+  # Django Backend
+  - type: web
+    name: motken-backend
+    env: python
+    region: oregon
+    buildCommand: |
+      cd backend &&
+      pip install -r requirements.txt &&
+      python manage.py collectstatic --no-input
+    startCommand: |
+      cd backend &&
+      python manage.py migrate &&
+      gunicorn --bind 0.0.0.0:$PORT --workers 3 core.wsgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DEBUG
+        value: False
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: motken-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: motken-redis
+          type: redis
+          property: connectionString
+      - key: ALLOWED_HOSTS
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: ZOOM_API_KEY
+        sync: false
+      - key: ZOOM_API_SECRET
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_STORAGE_BUCKET_NAME
+        sync: false
+
+  # Celery Worker
+  - type: worker
+    name: motken-celery-worker
+    env: python
+    region: oregon
+    buildCommand: cd backend && pip install -r requirements.txt
+    startCommand: cd backend && celery -A core worker -l info
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: motken-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: motken-redis
+          type: redis
+          property: connectionString
+
+  # Celery Beat
+  - type: worker
+    name: motken-celery-beat
+    env: python
+    region: oregon
+    buildCommand: cd backend && pip install -r requirements.txt
+    startCommand: cd backend && celery -A core beat -l info
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: motken-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: motken-redis
+          type: redis
+          property: connectionString
+
+  # Redis
+  - type: redis
+    name: motken-redis
+    region: oregon
+    plan: starter
+    ipAllowList: []
+
+databases:
+  # PostgreSQL Database
+  - name: motken-db
+    region: oregon
+    plan: starter
+    databaseName: motken
+    user: motken
