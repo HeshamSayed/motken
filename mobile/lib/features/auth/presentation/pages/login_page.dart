@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/auth_bloc.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -11,7 +13,6 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isLoading = false;
   bool _obscurePassword = true;
 
   @override
@@ -21,46 +22,36 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  Future<void> _login() async {
+  void _login() {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
 
-    try {
-      // TODO: Implement login with BLoC
-      // final email = _emailController.text.trim();
-      // final password = _passwordController.text.trim();
-      // context.read<AuthBloc>().add(LoginEvent(email: email, password: password));
-
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login successful!')),
-        );
-        // Navigate to home
-        // context.go('/');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login failed: $e')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
+    context.read<AuthBloc>().add(LoginEvent(
+      email: email,
+      password: password,
+    ));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
+      body: BlocConsumer<AuthBloc, AuthState>(
+        listener: (context, state) {
+          if (state is Authenticated) {
+            Navigator.pushReplacementNamed(context, '/home');
+          }
+          if (state is AuthError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
+          }
+        },
+        builder: (context, state) {
+          return SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),
             child: Form(
               key: _formKey,
@@ -158,8 +149,8 @@ class _LoginPageState extends State<LoginPage> {
 
                   // Login Button
                   ElevatedButton(
-                    onPressed: _isLoading ? null : _login,
-                    child: _isLoading
+                    onPressed: state is AuthLoading ? null : _login,
+                    child: state is AuthLoading
                         ? const SizedBox(
                             height: 20,
                             width: 20,
@@ -176,8 +167,7 @@ class _LoginPageState extends State<LoginPage> {
                       const Text("Don't have an account? "),
                       TextButton(
                         onPressed: () {
-                          // TODO: Navigate to register
-                          // context.go('/register');
+                          Navigator.pushNamed(context, '/register');
                         },
                         child: const Text('Register'),
                       ),
@@ -187,7 +177,9 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

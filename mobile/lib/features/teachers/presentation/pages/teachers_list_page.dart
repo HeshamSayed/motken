@@ -177,7 +177,7 @@ class _TeachersListPageState extends State<TeachersListPage> {
         onTap: () {
           Navigator.pushNamed(
             context,
-            '/book-session',
+            '/teacher-details',
             arguments: teacher.id,
           );
         },
@@ -190,7 +190,7 @@ class _TeachersListPageState extends State<TeachersListPage> {
                 radius: 40,
                 backgroundColor: Colors.blue.shade100,
                 child: Text(
-                  teacher.firstName.isNotEmpty ? teacher.firstName[0].toUpperCase() : 'T',
+                  teacher.user.firstName.isNotEmpty ? teacher.user.firstName[0].toUpperCase() : 'T',
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
