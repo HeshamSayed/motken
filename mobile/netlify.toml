@@ -1,11 +1,11 @@
+# Netlify configuration for Motken
+# Note: Build is handled by GitHub Actions, this is for deployment only
+
 [build]
-  base = "mobile/"
-  publish = "build/web"
-  command = """
-    flutter config --enable-web && \
-    flutter pub get && \
-    flutter build web --release --dart-define=API_BASE_URL=${API_BASE_URL:-http://localhost:8000/api/v1/}
-  """
+  # GitHub Actions builds and deploys directly
+  # No build command needed here
+  publish = "mobile/build/web"
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF ."
 
 [[redirects]]
   from = "/*"

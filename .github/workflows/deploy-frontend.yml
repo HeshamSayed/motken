@@ -1,0 +1,69 @@
+name: Deploy Frontend to Netlify
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/deploy-frontend.yml'
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: 'Backend API URL'
+        required: false
+        default: 'https://motken-backend.onrender.com/api/v1/'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.16.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Get Flutter dependencies
+        working-directory: mobile
+        run: |
+          flutter pub get
+          flutter --version
+
+      - name: Build Flutter web app
+        working-directory: mobile
+        env:
+          API_BASE_URL: ${{ secrets.API_BASE_URL || 'https://motken-backend.onrender.com/api/v1/' }}
+        run: |
+          flutter config --enable-web
+          flutter build web --release \
+            --web-renderer canvaskit \
+            --dart-define=API_BASE_URL=$API_BASE_URL
+
+      - name: Deploy to Netlify
+        uses: netlify/actions/cli@master
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        with:
+          args: deploy --dir=mobile/build/web --prod
+          secrets: '["NETLIFY_AUTH_TOKEN", "NETLIFY_SITE_ID"]'
+
+      - name: Comment deploy URL on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚀 Frontend deployed to Netlify! Check the deployment in the Netlify dashboard.'
+            })

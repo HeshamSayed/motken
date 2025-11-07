@@ -281,30 +281,86 @@ See [DEVELOPMENT.md](docs/DEVELOPMENT.md) for detailed development guide.
 
 ## Deployment
 
-### Production Deployment
+### 🚀 Automatic Deployment (Recommended)
 
-1. **Configure Environment**
-   - Update `.env` with production values
-   - Set `DEBUG=False`
-   - Configure `ALLOWED_HOSTS`
+**Push to GitHub → Automatic deployment!** No manual builds needed.
 
-2. **Build and Deploy**
+**Quick Start (15 minutes):**
 ```bash
-# Backend
-docker-compose -f docker-compose.prod.yml up -d
+# 1. Push code to GitHub
+git push origin main
 
-# Mobile
-flutter build apk --release          # Android
-flutter build ios --release          # iOS
+# 2. Deploy backend to Render (Blueprint)
+# 3. Add secrets to GitHub (Netlify tokens)
+# 4. Done! Both auto-deploy on every push
 ```
 
-3. **Post-Deployment**
-   - Run migrations
-   - Collect static files
-   - Run smoke tests
-   - Configure monitoring
+**Full setup guide:** [QUICK_START_AUTO_DEPLOY.md](QUICK_START_AUTO_DEPLOY.md)
 
-See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete deployment guide.
+**What's automated:**
+- ✅ Backend → Render (via `render.yaml`)
+- ✅ Frontend → Netlify (via GitHub Actions)
+- ✅ Database migrations
+- ✅ Static file collection
+- ✅ **Cost: $0/month** (free tiers)
+
+### Deployment Options
+
+Choose your preferred method:
+
+1. **[Automatic Deployment](QUICK_START_AUTO_DEPLOY.md)** ⭐ **Recommended**
+   - Push to GitHub = automatic deploy
+   - Takes 15 min to setup, then forever automatic
+   - Free tier available (Render + Netlify)
+
+2. **[Manual Deployment](DEPLOYMENT.md)**
+   - Build locally, deploy manually
+   - Multiple platform options (Railway, Vercel, etc.)
+   - Detailed configuration options
+
+3. **[Docker Deployment](docker-compose.yml)**
+   - Local testing or VPS deployment
+   - Complete stack with one command
+   - Good for development
+
+### Deployment Documentation
+
+- **[QUICK_START_AUTO_DEPLOY.md](QUICK_START_AUTO_DEPLOY.md)** - 15-min automatic setup ⚡
+- **[AUTOMATIC_DEPLOYMENT_SETUP.md](AUTOMATIC_DEPLOYMENT_SETUP.md)** - Complete auto-deploy guide
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - All deployment options
+- **[TROUBLESHOOT_NETLIFY.md](TROUBLESHOOT_NETLIFY.md)** - Troubleshooting guide
+
+### Production Deployment Checklist
+
+#### Backend (Render)
+- [ ] Blueprint deployed
+- [ ] Environment variables configured
+- [ ] Database connected
+- [ ] Celery workers running
+- [ ] Health check passing
+
+#### Frontend (Netlify)
+- [ ] GitHub Actions secrets configured
+- [ ] First deployment successful
+- [ ] CORS configured for frontend URL
+- [ ] API connection working
+
+#### Mobile Apps
+```bash
+# Android
+flutter build apk --release
+
+# iOS
+flutter build ios --release
+```
+
+### Post-Deployment
+
+- Run smoke tests
+- Configure monitoring (Sentry)
+- Set up backups
+- Enable HTTPS
+- Configure custom domain (optional)
 
 ## Performance Targets
 
